@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stat.h>
 
 #define MEMORY_SIZE 4096
 #define NUM_REGISTERS 16
@@ -20,11 +21,18 @@ typedef struct {
     unsigned char screen[SCREEN_WIDTH * SCREEN_HEIGHT]; // a pixel is one byte. Hence, we need 32 x 64 for our screen dimensions
 } CHIP8;
 
+void loadROM(CHIP8* chip8, const char* filename);
+void initialize(CHIP8* chip8);
+
 int main() {
     // initialize the CHIP 8. 
     CHIP8 chip8;
 
     initialize(&chip8);
+    loadROM(&chip8, "example.ch8");
+
+    // the ROM file contains the opcodes (instructions) for the emulator to follow
+    // the emulator must read these instructions from the ROM file, store them in space after the PC (program counter), then follow them
     
     // Then, run cycles of emultation.
     while (1) {
@@ -38,7 +46,28 @@ int main() {
     return 0;
 }
 
-void initialize(CHIP8 *chip8) {
+void loadROM(CHIP8* chip8, const char* filename) {
+    // open the file, check for errors
+    FILE* file = fopen(filename, "rb");
+    if (file == NULL) {
+        fprintf(stderr, "Error opening the file\n");
+        exit(1);
+    }
+    
+    struct stat buf;
+    stat(filename, &buf);
+    size_t fileSize = buf.st_size;
+
+    // read from the file onto memory starting at position 0x200
+    size_t bytesRead = fread(chip8->memory+0x200, 1, MEMORY_SIZE - 0x200, file);
+    fclose(file);
+    if (bytesRead != fileSize) {
+        fprintf(stderr, "Error reading file\n");
+        exit(1);
+    }
+}
+
+void initialize(CHIP8* chip8) {
     // set the addresses:
     chip8->pc = 0x200; // has to start at address 0x200 (because the space above this is for the interpreter)
     chip8->sp = 0; // starts at the top of the stack
@@ -81,8 +110,10 @@ void initialize(CHIP8 *chip8) {
         0xF0, 0x80, 0xF0, 0x80, 0xF0,  // E
         0xF0, 0x80, 0xF0, 0x80, 0x80   // F
     };
-    
-    memcpy(chip8->memory, fontSet, sizeof(fontSet));
+
+    for (int i = 0; i < 80; i ++) {
+        chip8->memory[0x50 + i] = fontSet[i]; // start the fontset at address 0x50 (position 80)
+    }
 
     // reset the timers
     chip8->soundTimer = 0;
