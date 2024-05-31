@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <stat.h>
+#include <sys/stat.h>
 
 #define MEMORY_SIZE 4096
 #define NUM_REGISTERS 16
