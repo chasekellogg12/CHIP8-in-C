@@ -29,19 +29,19 @@ int main() {
     CHIP8 chip8;
 
     initialize(&chip8);
-    loadROM(&chip8, "example.ch8");
+    loadROM(&chip8, "roms/BREAKOUT.ch8");
 
     // the ROM file contains the opcodes (instructions) for the emulator to follow
     // the emulator must read these instructions from the ROM file, store them in space after the PC (program counter), then follow them
     
     // Then, run cycles of emultation.
-    while (1) {
-        // emulate a cycle
+    // while (1) {
+    //     // emulate a cycle
 
-        // then display
+    //     // then display
 
-        // then handle input
-    }
+    //     // then handle input
+    // }
     
     return 0;
 }
@@ -60,6 +60,7 @@ void loadROM(CHIP8* chip8, const char* filename) {
 
     // read from the file onto memory starting at position 0x200
     size_t bytesRead = fread(chip8->memory+0x200, 1, MEMORY_SIZE - 0x200, file);
+
     fclose(file);
     if (bytesRead != fileSize) {
         fprintf(stderr, "Error reading file\n");
