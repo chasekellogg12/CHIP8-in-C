@@ -8,7 +8,7 @@
 #define KEYBOARD_SIZE 16
 #define SCREEN_WIDTH 64
 #define SCREEN_HEIGHT 32
-#define NUM_FONTS 80 // 16 sprites each of 5 bytes
+#define NUM_FONTS 80
 
 typedef struct {
     unsigned char memory[MEMORY_SIZE]; // 4k memory to work with
