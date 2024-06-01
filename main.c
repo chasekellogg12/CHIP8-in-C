@@ -8,6 +8,8 @@
 #define KEYBOARD_SIZE 16
 #define SCREEN_WIDTH 64
 #define SCREEN_HEIGHT 32
+#define NUM_FONTS 80 // 16 sprites each of 5 bytes
+
 typedef struct {
     unsigned char memory[MEMORY_SIZE]; // 4k memory to work with
     unsigned char V[NUM_REGISTERS]; // 16 general purpose registers each of size 8 bits (the last of which should only be used by flags)
@@ -31,17 +33,29 @@ int main() {
     initialize(&chip8);
     loadROM(&chip8, "roms/BREAKOUT.ch8");
 
+    // so now our memory has all these instructions from the ROM. We have to go thru them and for each, we decode them and 
+    // basically, we start by executing what's at 0x200. This might tell us to jump to the opcode at 0x210 for instance. We just jump around like this.
+    // a single opcode is 2 bytes. So, when we try to fetch the opcode at PC, we must fetch the byte at PC and combine it with the byte at PC+1 to get the opcode
+
+    // PC is like "what's coming next"
+    // the stack contains all the commands we haven't conducted yet, but we need to get around to
+    // SP is the position in the stack
+    // PC is the thing that's supposed to come next
+        // place what PC is pointing to on top of the stack
+        // then conduct the current operation
+        // then conduct the top of the stack
+
     // the ROM file contains the opcodes (instructions) for the emulator to follow
     // the emulator must read these instructions from the ROM file, store them in space after the PC (program counter), then follow them
     
     // Then, run cycles of emultation.
-    // while (1) {
-    //     // emulate a cycle
+    while (1) {
+        // emulate a cycle
 
-    //     // then display
+        // then display
 
-    //     // then handle input
-    // }
+        // then handle input
+    }
     
     return 0;
 }
@@ -93,7 +107,7 @@ void initialize(CHIP8* chip8) {
 
     // load the fontset into the area of memory for the interpreter (between 0x000 and 0x1FF) 
     // we have 16 sprites to remember (0 - F). Each of these have 5 bytes. Hence, we have 5 * 16 = 80 total bytes worth of sprites
-    char fontSet[5 * 16] = {
+    char fontSet[NUM_FONTS] = {
         0xF0, 0x90, 0x90, 0x90, 0xF0,  // 0
         0x20, 0x60, 0x20, 0x20, 0x70,  // 1
         0xF0, 0x10, 0xF0, 0x80, 0xF0,  // 2
@@ -112,7 +126,7 @@ void initialize(CHIP8* chip8) {
         0xF0, 0x80, 0xF0, 0x80, 0x80   // F
     };
 
-    for (int i = 0; i < 80; i ++) {
+    for (int i = 0; i < NUM_FONTS; i++) {
         chip8->memory[0x50 + i] = fontSet[i]; // start the fontset at address 0x50 (position 80)
     }
 
