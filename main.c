@@ -174,6 +174,12 @@ void emulateCycle(CHIP8* chip8) {
             exit(1);
     }
 
+    if (chip8->soundTimer > 0)
+        chip8->soundTimer -= 1;
+    
+    if (chip8->delayTimer > 0)
+        chip8->delayTimer -= 1;
+    
 }
 
 void loadROM(CHIP8* chip8, const char* filename) {
