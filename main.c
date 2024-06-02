@@ -73,12 +73,20 @@ void emulateCycle(CHIP8* chip8) {
     // F = 1111
     // 0 = 0000
     // etc (each hex digit is 4 bits)
+
+    // x will always appear in the second position. This is an index.
+    unsigned short x = (opcode & 0x0F00) >> 8; // 0x0F00 = 0000 1111 0000 0000 -> shift to the right 8 times to get just the index.
+
+    // y will always appear in the third position. This is an index.
+    unsigned short y = (opcode & 0x00F0) >> 4; // 0x00F0 = 0000 0000 1111 0000 -> shift to the right 4 times to get just the index.
+    
+    // y will always appear in the third position
     switch(opcode & 0xF000) { // at first, we only care about the first 4 bits of the opcode as the opcodes are grouped based on this first nibble
         case 0x0000:
             switch(opcode & 0x00FF) {
                 case 0x00E0: // CLS - clear the display
                     for (int i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++)
-                        chip8->memory[i] = 0;
+                        chip8->screen[i] = 0;
                     chip8->pc += 2;
                     break;
                 case 0x00EE: // RET - return from subroutine
@@ -100,15 +108,28 @@ void emulateCycle(CHIP8* chip8) {
             chip8->sp += 1;
             chip8->pc = opcode & 0x0FFF;
             break;
-        case 0x3000: // 3xkk - SE Vx, byte
+        case 0x3000: // 3xkk - SE Vx, byte (SE) - skip NEXT instruction if Vx == kk
+            if (chip8->V[x] == (opcode & 0x00FF))
+                chip8->pc += 2;
+            chip8->pc += 2;
             break;
-        case 0x4000: // 4xnn
+        case 0x4000: // 4xkk - skip next instruction if Vx != kk (SNE)
+            if (chip8->V[x] != (opcode & 0x00FF))
+                chip8->pc += 2;
+            chip8->pc += 2;
             break;
-        case 0x5000: // 5xy0 
+        case 0x5000: // 5xy0 - skip next instruction if Vx == Vy (SE)
+            if (chip8->V[x] == chip8->V[y])
+                chip8->pc += 2;
+            chip8->pc += 2;
             break;
-        case 0x6000: // 6xnn 
+        case 0x6000: // 6xkk - set Vx = kk (LD)
+            chip8->V[x] = (opcode & 0x00FF);
+            chip8->pc += 2;
             break;
-        case 0x7000: // 7xnn
+        case 0x7000: // 7xkk - set Vx = Vx + kk
+            chip8->V[x] += (opcode & 0x00FF);
+            chip8->pc += 2;
             break;
         case 0x8000: 
             switch(opcode & 0x000F) {
