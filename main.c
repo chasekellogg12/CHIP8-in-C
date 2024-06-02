@@ -25,6 +25,7 @@ typedef struct {
 
 void loadROM(CHIP8* chip8, const char* filename);
 void initialize(CHIP8* chip8);
+void emulateCycle(CHIP8* chip8);
 
 int main() {
     // initialize the CHIP 8. 
@@ -51,13 +52,128 @@ int main() {
     // Then, run cycles of emultation.
     while (1) {
         // emulate a cycle
-
+        emulateCycle(&chip8);
         // then display
 
         // then handle input
     }
     
     return 0;
+}
+
+void emulateCycle(CHIP8* chip8) {
+    // a cycle is just ONE opcode. Fetch it, decode it, execute it.
+    // to fetch, get the char at memory[pc]. Combine it with the char at memory[pc+1] (bc opcodes are 2 bytes, with the first as the address and second as command)
+    // to combine it, use a bitwise operator. Each byte is 8 bits. Take the first byte, shift these bits to the left 4 spaces (to make room for the next byte).
+        // then, use an OR between the two to create a short (2 byte) opcode
+    unsigned short opcode = (chip8->memory[chip8->pc] << 8) | chip8->memory[chip8->pc+1];
+    // 1111 0000000000 = 0xF000
+    // F = 1111
+    // 0 = 0000
+    // etc (each hex digit is 4 bits)
+    switch(opcode & 0xF000) { // at first, we only care about the first 4 bits of the opcode as the opcodes are grouped based on this first nibble
+        case 0x0000:
+            switch(opcode & 0x00FF) {
+                case 0x00E0: // CLS - clear the display
+                    for (int i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++)
+                        chip8->memory[i] = 0;
+                    chip8->pc += 2;
+                    break;
+                case 0x00EE: // RET - return from subroutine
+                    break;
+                default: // 0nnn -> SYS addr - jump to a machine code routine at nnn
+                    break;
+            }
+            break;
+        case 0x1000: // 1nnn -> JP addr - jump to location nnn
+            break;
+        case 0x2000: // 2nnn -> CALL addr
+            break;
+        case 0x3000: // 3xkk - SE Vx, byte
+            break;
+        case 0x4000: // 4xnn
+            break;
+        case 0x5000: // 5xy0 
+            break;
+        case 0x6000: // 6xnn 
+            break;
+        case 0x7000: // 7xnn
+            break;
+        case 0x8000: 
+            switch(opcode & 0x000F) {
+                case 0x0000: // 8xy0
+                    break;
+                case 0x0001: // 8xy1
+                    break;
+                case 0x0002: // 8xy2
+                    break;
+                case 0x0003: // 8xy3
+                    break;
+                case 0x0004: // 8xy4
+                    break;
+                case 0x0005: // 8xy5
+                    break;
+                case 0x0006: // 8xy6
+                    break;
+                case 0x0007: // 8xy7
+                    break; 
+                case 0x000E: // 8xyE
+                    break;                     
+                default:
+                    fprintf(stderr, "Unkown opcode\n");
+                    exit(1);
+            }
+            break;
+        case 0x9000: // 9xy0
+            break;
+        case 0xA000: // Annn
+            break;
+        case 0xB000: // Bnnn
+            break;
+        case 0xC000: // Cxnn
+            break;
+        case 0xD000: // Dxyn
+            break;
+        case 0xE000:
+            switch(opcode & 0x00FF) {
+                case 0x009E: // Ex9E
+                    break;
+                case 0x00A1: // ExA1
+                    break;
+                default:
+                    fprintf(stderr, "Unkown opcode\n");
+                    exit(1);
+            }
+            break;
+        case 0xF000:
+            switch(opcode & 0x00FF) {
+                case 0x0007: // Fx07
+                    break;
+                case 0x000A: // Fx0A
+                    break;
+                case 0x0015: // Fx15
+                    break;
+                case 0x0018: // Fx18
+                    break;
+                case 0x001E: // Fx1E
+                    break;
+                case 0x0029: // Fx29
+                    break;
+                case 0x0033: // Fx33
+                    break;
+                case 0x0055: // Fx55
+                    break;
+                case 0x0065: // Fx65
+                    break;
+                default:
+                    fprintf(stderr, "Unkown opcode\n");
+                    exit(1);
+            }
+        default:
+            fprintf(stderr, "Unkown opcode\n");
+            exit(1);
+    }
+
 }
 
 void loadROM(CHIP8* chip8, const char* filename) {
