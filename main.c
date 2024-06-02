@@ -133,23 +133,53 @@ void emulateCycle(CHIP8* chip8) {
             break;
         case 0x8000: 
             switch(opcode & 0x000F) {
-                case 0x0000: // 8xy0
+                case 0x0000: // 8xy0 - stores the value of register Vy in register Vx
+                    chip8->V[x] = chip8->V[y];
+                    chip8->pc += 2;
                     break;
-                case 0x0001: // 8xy1
+                case 0x0001: // 8xy1 - performs bitwise OR between values in Vx and Vy and stores result in Vx
+                    chip8->V[x] |= chip8->V[y];
+                    chip8->pc += 2;
                     break;
-                case 0x0002: // 8xy2
+                case 0x0002: // 8xy2 - performs bitwise AND between values in Vx and Vy and stores result in Vx
+                    chip8->V[x] &= chip8->V[y];
+                    chip8->pc += 2;
                     break;
-                case 0x0003: // 8xy3
+                case 0x0003: // 8xy3 - performs bitwise XOR between values in Vx and Vy and stores result in Vx
+                    chip8->V[x] ^= chip8->V[y];
+                    chip8->pc += 2;
                     break;
-                case 0x0004: // 8xy4
+                case 0x0004: // 8xy4 - set Vx = Vx + Vy, set VF = 1 if carry, VF = 0 otherwise.
+                    // if adding causes overflow, put 1 in carry
+                    chip8->V[0xF] = 0;
+                    if (chip8->V[x] + chip8->V[y] > 0xFF)
+                        chip8->V[0xF] = 0;
+                    chip8->V[x] += chip8->V[y];
+                    chip8->pc += 2;
                     break;
-                case 0x0005: // 8xy5
+                case 0x0005: // 8xy5 - set Vx = Vx - Vy, set VF = NOT borrow.
+                    chip8->V[0xF] = 0;
+                    if (chip8->V[x] > chip8->V[y])
+                        chip8->V[0xF] = 1;
+                    chip8->V[x] -= chip8->V[y];
+                    chip8->pc += 2;
                     break;
-                case 0x0006: // 8xy6
+                case 0x0006: // 8xy6 - Set Vx = Vx SHR 1 (shift right 1)
+                    chip8->V[0xF] = (chip8->V[x] & 0x1);
+                    chip8->V[x] >>= 1;
+                    chip8->pc += 2;
                     break;
-                case 0x0007: // 8xy7
+                case 0x0007: // 8xy7 - Set Vx = Vy - Vx, set VF = NOT borrow.
+                    chip8->V[0xF] = 0;
+                    if (chip8->V[y] > chip8->V[x])
+                        chip8->V[0xF] = 1;
+                    chip8->V[x] = chip8->V[y] - chip8->V[x];
+                    chip8->pc += 2;
                     break; 
-                case 0x000E: // 8xyE
+                case 0x000E: // 8xyE - Set Vx = Vx SHL 1.
+                    chip8->V[0xF] = ((chip8->V[x] >> 7) & 0x1); // shifting to right 7 times puts most significant bit at the rightmost spot
+                    chip8->V[x] <<= 1;
+                    chip8->pc += 2;
                     break;                     
                 default:
                     fprintf(stderr, "Unkown opcode\n");
