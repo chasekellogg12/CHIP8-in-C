@@ -53,9 +53,11 @@ int main() {
     while (1) {
         // emulate a cycle
         emulateCycle(&chip8);
+
         // then display
 
         // then handle input
+
     }
     
     return 0;
@@ -80,14 +82,23 @@ void emulateCycle(CHIP8* chip8) {
                     chip8->pc += 2;
                     break;
                 case 0x00EE: // RET - return from subroutine
+                    chip8->sp--;
+                    chip8->pc = chip8->stack[chip8->sp];
+                    chip8->pc += 2; // pc is always the NEXT instruction
                     break;
-                default: // 0nnn -> SYS addr - jump to a machine code routine at nnn
+                default: // 0nnn -> SYS addr - jump to a machine code routine at nnn. A JMP is like a call but it doesnt put anything onto the stack
+                    // just set PC to be the called address + 2 (this is typically ignored by modern interpreters)
+                    chip8->pc += 2;
                     break;
             }
             break;
         case 0x1000: // 1nnn -> JP addr - jump to location nnn
+            chip8->pc = opcode & 0x0FFF;
             break;
         case 0x2000: // 2nnn -> CALL addr
+            chip8->stack[chip8->sp] = chip8->pc;
+            chip8->sp += 1;
+            chip8->pc = opcode & 0x0FFF;
             break;
         case 0x3000: // 3xkk - SE Vx, byte
             break;
