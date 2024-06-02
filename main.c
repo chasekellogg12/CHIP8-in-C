@@ -186,15 +186,25 @@ void emulateCycle(CHIP8* chip8) {
                     exit(1);
             }
             break;
-        case 0x9000: // 9xy0
+        case 0x9000: // 9xy0 - Skip next instruction if Vx != Vy.
+            if (chip8->V[x] != chip8->V[y])
+                chip8->pc += 2;
+            chip8->pc += 2;
             break;
-        case 0xA000: // Annn
+        case 0xA000: // Annn - Set I = nnn.
+            chip8->I = opcode & 0x0FFF;
+            chip8->pc += 2;
             break;
-        case 0xB000: // Bnnn
+        case 0xB000: // Bnnn - Jump to location nnn + V0.
+            chip8->pc = (opcode & 0x0FFF) + chip8->V[0];
             break;
-        case 0xC000: // Cxnn
+        case 0xC000: // Cxkk - Set Vx = random byte AND kk.
+            srand(time(NULL)); // Seed the random number generator
+            unsigned char randomByte = (unsigned char) rand(); // rand() produces a random int, so casting it to a char gives a random char
+            chip8->V[x] = randomByte & (opcode & 0x00FF);
+            chip8->pc += 2;
             break;
-        case 0xD000: // Dxyn
+        case 0xD000: // Dxyn - Display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision.
             break;
         case 0xE000:
             switch(opcode & 0x00FF) {
