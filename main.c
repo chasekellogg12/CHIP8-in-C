@@ -68,6 +68,7 @@ void emulateCycle(CHIP8* chip8) {
     // to fetch, get the char at memory[pc]. Combine it with the char at memory[pc+1] (bc opcodes are 2 bytes, with the first as the address and second as command)
     // to combine it, use a bitwise operator. Each byte is 8 bits. Take the first byte, shift these bits to the left 4 spaces (to make room for the next byte).
         // then, use an OR between the two to create a short (2 byte) opcode
+    unsigned char randomByte;
     unsigned short opcode = (chip8->memory[chip8->pc] << 8) | chip8->memory[chip8->pc+1];
     // 1111 0000000000 = 0xF000
     // F = 1111
@@ -199,8 +200,8 @@ void emulateCycle(CHIP8* chip8) {
             chip8->pc = (opcode & 0x0FFF) + chip8->V[0];
             break;
         case 0xC000: // Cxkk - Set Vx = random byte AND kk.
-            srand(time(NULL)); // Seed the random number generator
-            unsigned char randomByte = (unsigned char) rand(); // rand() produces a random int, so casting it to a char gives a random char
+            //srand(time(NULL)); // Seed the random number generator
+            randomByte = (unsigned char) rand(); // rand() produces a random int, so casting it to a char gives a random char
             chip8->V[x] = randomByte & (opcode & 0x00FF);
             chip8->pc += 2;
             break;
