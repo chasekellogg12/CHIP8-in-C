@@ -20,7 +20,7 @@ typedef struct {
     unsigned char sp; // stack pointer => points to the top of the stack
     unsigned short stack[STACK_SIZE]; // stores the address the interpreter should return to when done with a subroutine
     unsigned char keyboard[KEYBOARD_SIZE]; // 16 different keys
-    unsigned char screen[SCREEN_WIDTH * SCREEN_HEIGHT]; // a pixel is one byte. Hence, we need 32 x 64 for our screen dimensions
+    unsigned int screen[SCREEN_WIDTH * SCREEN_HEIGHT]; // use an unsigned int for screen instead of char to make working with SDL easier
 } CHIP8;
 
 void loadROM(CHIP8* chip8, const char* filename);
@@ -206,32 +206,26 @@ void emulateCycle(CHIP8* chip8) {
             chip8->pc += 2;
             break;
         case 0xD000: // Dxyn - Display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision.
-            // TODO -> handle screen overflow and test
-            // have a byte pointer to keep track of bytes read after I.
-            // 2x3 screen. looks like [x, x, x, x, x, x]
+            // given a sprite (the bytes for which are located at memory[I]), go thru the 8 bits of each of its bytes
+            // if this bit is a 1, do screen pixel ^= 0xFFFFFFFFFF (which is just xoring it by 1)
+            chip8->V[0xF] = 0;
+            unsigned char xPos = chip8->V[x] % SCREEN_WIDTH;
+            unsigned char yPos = chip8->V[x] % SCREEN_HEIGHT;
 
-            // memory[0x50] to memory[0x130] has the sprites needed. Every 5 bytes in this span is part of a sprite 
-            // (ie: memory[0x50]/memory[0x51] are part of sprite 0 while memory[0x55] is part of sprite 1)
-            // display goes from (0,0) - (63,0)
-            //                     |        | 
-            //                  (0, 31) - (63,31)
-            // in 1D -> (0, 0), (1, 0), (2, 0), ... (63, 0), (0, 1) [new row], (1, 1), ... 
-                // if (Vx, Vy) = (1, 2), we want the 2nd element in the 3rd row (0-indexed)
-                // for the Vxth element of the Vyth row, do mem[Vy *  63 + Vx]
-                    // ie: (Vx, Vy) = (1, 2), do screen[126 + 1]
-            // GIVEN A SPRITE (which has 5 bytes):
-                // byte1 goes in (Vx, Vy), byte2 goes in (Vx+1, Vy) ... until byte5 goes in (Vx+4,Vy)
-            for (int i = 0; i < (opcode & 0x000F) * 2; i += 2) { // read bytes of memory n times (skip by 2 everytime so we can start at an address everytime)
-                // chip8->memory[chip8->I + i] is where we're currently reading from
-                // we only want ONE byte, however, chip8->memory[chip8->I + i] is 2 bytes.
-                    // so shift its bits to the right 8 times, then do & 0xFF to get just the first byte.
-                // this will be one byte between 0 and F. It'll tell us which sprite we want. Call it S.
-                // each sprite is 5 bytes long, so do memory[0x50 (starting point of sprites) + 16 * S] to index the Sth sprite.
-                unsigned char start = 0x50 + (16 * ((chip8->memory[chip8->I + i] >> 8) & 0xFF)); // get the start of the sprite
-                for (int j = 0; i < 5; j++) // go thru all the 5 bytes in this sprite. Set the screen accordingly.
-                    chip8->screen[chip8->V[y] * SCREEN_WIDTH + chip8->V[x] + j] = chip8->memory[start+j];
+            // the first row of the sprite is located at memory[i], second row located at memory[i+1], etc. [each row is a byte]
+            for (int row = 0; row < (opcode & 0x000F); row++) { 
+                unsigned char spriteByte = chip8->memory[chip8->I + row]; // gets the start of the rowth byte in the sprite
+                for (int col = 0; col < 8; col++) { // go thru all the 8 bits in this byte of the sprite (shift spriteByte i bits to right then do & 1 to get the ith bit)
+                    unsigned char spritePixel = (spriteByte >> col) & 0x01;
+                    unsigned int* screenPixel = &chip8->screen[(yPos + row) * SCREEN_WIDTH + (xPos + col)]; // get what's currently at the position we need to be at
+                    if (spritePixel) { // if the spritePixel is on
+                        if (*screenPixel)
+                            chip8->V[0xF] = 1;
+                        *screenPixel ^= 0xFFFFFFFF;
+                    }
+                }
             }
-            
+            chip8->pc += 2;
             break;
         case 0xE000:
             switch(opcode & 0x00FF) {
