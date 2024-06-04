@@ -235,9 +235,15 @@ void emulateCycle(CHIP8* chip8) {
             break;
         case 0xE000:
             switch(opcode & 0x00FF) {
-                case 0x009E: // Ex9E
+                case 0x009E: // Ex9E - Skip next instruction if key with the value of Vx is pressed.
+                    if (chip8->keyboard[chip8->V[x]])
+                        chip8->pc += 2;
+                    chip8->pc += 2;
                     break;
-                case 0x00A1: // ExA1
+                case 0x00A1: // ExA1 - Skip next instruction if key with the value of Vx is not pressed.
+                    if (!chip8->keyboard[chip8->V[x]])
+                        chip8->pc += 2;
+                    chip8->pc += 2;
                     break;
                 default:
                     fprintf(stderr, "Unkown opcode\n");
@@ -246,23 +252,53 @@ void emulateCycle(CHIP8* chip8) {
             break;
         case 0xF000:
             switch(opcode & 0x00FF) {
-                case 0x0007: // Fx07
+                case 0x0007: // Fx07 - Set Vx = delay timer value.
+                    chip8->V[x] = chip8->delayTimer;
+                    chip8->pc += 2;
                     break;
-                case 0x000A: // Fx0A
+                case 0x000A: // Fx0A - Wait for a key press, store the value of the key in Vx.
+                    // go thru all the values in keyboard until we find a pressed value
+                    for (int i = 0; i < KEYBOARD_SIZE; i++) {
+                        if (chip8->keyboard[i]) {
+                            chip8->V[x] = i;
+                            break;
+                        }
+                    }
+                    chip8->pc += 2;
                     break;
-                case 0x0015: // Fx15
+                case 0x0015: // Fx15 - Set delay timer = Vx.
+                    chip8->delayTimer = chip8->V[x];
+                    chip8->pc += 2;
                     break;
-                case 0x0018: // Fx18
+                case 0x0018: // Fx18 - Set sound timer = Vx.
+                    chip8->soundTimer = chip8->V[x];
+                    chip8->pc += 2;
                     break;
-                case 0x001E: // Fx1E
+                case 0x001E: // Fx1E - The values of I and Vx are added, and the results are stored in I.
+                    chip8->I += chip8->V[x];
+                    chip8->pc += 2;
                     break;
-                case 0x0029: // Fx29
+                case 0x0029: // Fx29 - Set I = location of sprite for digit Vx.
+                    // V[x] is a char (0 - F). Set I = location of the V[x]th sprite. Each sprite is 5 bytes long. 
+                    // the bytes are stored starting at memory[0x50]. So to find the start of the V[x]th sprite, do 0x50 + V[x] * 5
+                    chip8->I = 0x50 + chip8->V[x] * 5;
+                    chip8->pc += 2;
                     break;
-                case 0x0033: // Fx33
+                case 0x0033: // Fx33 - Store BCD representation of Vx in memory locations I, I+1, and I+2.
+                    chip8->memory[chip8->I] = (chip8->V[x] % 1000) / 100;
+                    chip8->memory[chip8->I+1] = (chip8->V[x] % 100) / 10;
+                    chip8->memory[chip8->I+2] = (chip8->V[x] % 10);
+                    chip8->pc += 2;
                     break;
-                case 0x0055: // Fx55
+                case 0x0055: // Fx55 - Store registers V0 through Vx in memory starting at location I.
+                    for (int i = 0; i <= x; i++)
+                        chip8->memory[chip8->I+i] = chip8->V[i];
+                    chip8->pc += 2;
                     break;
-                case 0x0065: // Fx65
+                case 0x0065: // Fx65 - Read registers V0 through Vx from memory starting at location I.
+                    for (int i = 0; i <= x; i++)
+                        chip8->V[i] = chip8->memory[chip8->I+i];
+                    chip8->pc += 2;
                     break;
                 default:
                     fprintf(stderr, "Unkown opcode\n");
