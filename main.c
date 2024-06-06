@@ -11,6 +11,7 @@ SDL_Texture* texture = NULL;
 
 int initialize();
 void close();
+int handleInput(unsigned char* keyboard);
 
 int main() {
     // initialize the screen 
@@ -27,10 +28,10 @@ int main() {
     SDL_Event e;
 
     while (!quit) {
-        while (SDL_PollEvent(&e) != 0) {
-            if (e.type == SDL_QUIT)
-                quit = 1;
-        }
+        // handle input
+        quit = handleInput(chip8.keyboard);
+
+        // emulate the cycle
         emulateCycle(&chip8);
 
         // render the screen
@@ -38,8 +39,6 @@ int main() {
         SDL_RenderClear(renderer);
         SDL_RenderCopy(renderer, texture, NULL, NULL);
         SDL_RenderPresent(renderer);
-
-        // handle input
     }
     
     close();
@@ -82,4 +81,135 @@ void close() {
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
+}
+
+int handleInput(unsigned char* keyboard) {
+    int quit = 0;
+    
+    SDL_Event e;
+    while (SDL_PollEvent(&e)) {
+        switch(e.type)
+        {
+            case SDL_QUIT:
+                quit = 1;
+                break;
+            case SDL_KEYDOWN:
+                switch (e.key.keysym.sym) {
+                    case SDLK_ESCAPE:
+                        quit = 1;
+                        break;
+                    case SDLK_x:
+                        keyboard[0] = 1;
+                        break;
+                    case SDLK_1:
+                        keyboard[1] = 1;
+                        break;
+                    case SDLK_2:
+                        keyboard[2] = 1;
+                        break;
+                    case SDLK_3:
+                        keyboard[3] = 1;
+                        break;
+                    case SDLK_q:
+                        keyboard[4] = 1;
+                        break;
+                    case SDLK_w:
+                        keyboard[5] = 1;
+                        break;
+                    case SDLK_e:
+                        keyboard[6] = 1;
+                        break;
+                    case SDLK_a:
+                        keyboard[7] = 1;
+                        break;
+                    case SDLK_s:
+                        keyboard[8] = 1;
+                        break;
+                    case SDLK_d:
+                        keyboard[9] = 1;
+                        break;    
+                    case SDLK_z:
+                        keyboard[0xA] = 1;
+                        break;    
+                    case SDLK_c:
+                        keyboard[0xB] = 1;
+                        break;    
+                    case SDLK_4:
+                        keyboard[0xC] = 1;
+                        break;    
+                    case SDLK_r:
+                        keyboard[0xD] = 1;
+                        break;    
+                    case SDLK_f:
+                        keyboard[0xE] = 1;
+                        break;    
+                    case SDLK_v:
+                        keyboard[0xF] = 1;
+                        break;          
+                    default:
+                        break;
+                }
+                break;
+            case SDL_KEYUP:
+                switch (e.key.keysym.sym) {
+                    case SDLK_ESCAPE:
+                        quit = 1;
+                        break;
+                    case SDLK_x:
+                        keyboard[0] = 1;
+                        break;
+                    case SDLK_1:
+                        keyboard[1] = 1;
+                        break;
+                    case SDLK_2:
+                        keyboard[2] = 1;
+                        break;
+                    case SDLK_3:
+                        keyboard[3] = 1;
+                        break;
+                    case SDLK_q:
+                        keyboard[4] = 1;
+                        break;
+                    case SDLK_w:
+                        keyboard[5] = 1;
+                        break;
+                    case SDLK_e:
+                        keyboard[6] = 1;
+                        break;
+                    case SDLK_a:
+                        keyboard[7] = 1;
+                        break;
+                    case SDLK_s:
+                        keyboard[8] = 1;
+                        break;
+                    case SDLK_d:
+                        keyboard[9] = 1;
+                        break;    
+                    case SDLK_z:
+                        keyboard[0xA] = 1;
+                        break;    
+                    case SDLK_c:
+                        keyboard[0xB] = 1;
+                        break;    
+                    case SDLK_4:
+                        keyboard[0xC] = 1;
+                        break;    
+                    case SDLK_r:
+                        keyboard[0xD] = 1;
+                        break;    
+                    case SDLK_f:
+                        keyboard[0xE] = 1;
+                        break;    
+                    case SDLK_v:
+                        keyboard[0xF] = 1;
+                        break;          
+                    default:
+                        break;
+                }
+                break;
+            default:
+                break;
+        }
+    }
+    return quit;
 }

@@ -23,7 +23,7 @@ typedef struct {
     unsigned char sp; // stack pointer => points to the top of the stack
     unsigned short stack[STACK_SIZE]; // stores the address the interpreter should return to when done with a subroutine
     unsigned char keyboard[KEYBOARD_SIZE]; // 16 different keys
-    unsigned int screen[SCREEN_WIDTH * SCREEN_HEIGHT]; // use an unsigned int for screen instead of char to make working with SDL easier
+    unsigned int screen[SCREEN_WIDTH * SCREEN_HEIGHT]; // use unsigned ints (32 bits) for screen instead of char to make working with SDL easier
 } CHIP8;
 
 void loadROM(CHIP8* chip8, const char* filename);

@@ -1,24 +1,29 @@
 #include "chip8.h"
 
 void emulateCycle(CHIP8* chip8) {
-    // a cycle is just ONE opcode. Fetch it, decode it, execute it.
-    // to fetch, get the char at memory[pc]. Combine it with the char at memory[pc+1] (bc opcodes are 2 bytes, with the first as the address and second as command)
-    // to combine it, use a bitwise operator. Each byte is 8 bits. Take the first byte, shift these bits to the left 4 spaces (to make room for the next byte).
-        // then, use an OR between the two to create a short (2 byte) opcode
-    unsigned char randomByte;
-    unsigned short opcode = (chip8->memory[chip8->pc] << 8) | chip8->memory[chip8->pc+1];
-    // 1111 0000000000 = 0xF000
-    // F = 1111
-    // 0 = 0000
-    // etc (each hex digit is 4 bits)
+    /* 
+        - a cycle is just ONE opcode. Fetch it, decode it, execute it.
+        - to fetch:
+            - get the char at memory[pc]
+        - to decode:
+            - combine it with the char at memory[pc+1] (bc opcodes are 2 bytes, with the first as the address and second as command)
+                - to combine:
+                    - 5ake the first byte, shift these bits to the left 4 spaces (to make room for the next byte)
+                    - then, use an OR between the two to create a short (2 byte) opcode
+        - to execute:
+            - see implementations in the switch cases below
+    */
+
+    unsigned short opcode = (chip8->memory[chip8->pc] << 8) | chip8->memory[chip8->pc+1]; // fetch and decode
 
     // x will always appear in the second position. This is an index.
     unsigned short x = (opcode & 0x0F00) >> 8; // 0x0F00 = 0000 1111 0000 0000 -> shift to the right 8 times to get just the index.
 
     // y will always appear in the third position. This is an index.
     unsigned short y = (opcode & 0x00F0) >> 4; // 0x00F0 = 0000 0000 1111 0000 -> shift to the right 4 times to get just the index.
+
+    unsigned char randomByte; // we'll use this variable in opcdoe cxkk
     
-    // y will always appear in the third position
     switch(opcode & 0xF000) { // at first, we only care about the first 4 bits of the opcode as the opcodes are grouped based on this first nibble
         case 0x0000:
             switch(opcode & 0x00FF) {
@@ -121,6 +126,7 @@ void emulateCycle(CHIP8* chip8) {
                     break;                     
                 default:
                     fprintf(stderr, "Unkown opcode\n");
+                    printf("1");
                     exit(1);
             }
             break;
@@ -178,6 +184,7 @@ void emulateCycle(CHIP8* chip8) {
                     break;
                 default:
                     fprintf(stderr, "Unkown opcode\n");
+                    printf("2");
                     exit(1);
             }
             break;
@@ -235,9 +242,6 @@ void emulateCycle(CHIP8* chip8) {
                     fprintf(stderr, "Unkown opcode\n");
                     exit(1);
             }
-        default:
-            fprintf(stderr, "Unkown opcode\n");
-            exit(1);
     }
 
     if (chip8->soundTimer > 0)
