@@ -15,6 +15,7 @@ void emulateCycle(CHIP8* chip8) {
     */
     unsigned short opcode = (chip8->memory[chip8->pc] << 8) | chip8->memory[chip8->pc+1]; // fetch and decode
 
+    //printf("curr opcode: %hu\n", opcode & 0xF000);
     chip8->drawFlag = 0;
 
     // x will always appear in the second position. This is an index.
@@ -33,23 +34,25 @@ void emulateCycle(CHIP8* chip8) {
                         chip8->screen[i] = 0;
                     chip8->pc += 2;
                     break;
-                case 0x00EE: // RET - return from subroutine
+                case 0x00EE: // RET - return from subroutine // THIS
+                    //chip8->pc = chip8->stack[chip8->sp];
                     chip8->sp--;
                     chip8->pc = chip8->stack[chip8->sp];
                     chip8->pc += 2; // pc is always the NEXT instruction
                     break;
                 default: // 0nnn -> SYS addr - jump to a machine code routine at nnn. A JMP is like a call but it doesnt put anything onto the stack
                     // just set PC to be the called address + 2 (this is typically ignored by modern interpreters)
-                    chip8->pc += 2;
+                    //chip8->pc += 2;
                     break;
             }
             break;
         case 0x1000: // 1nnn -> JP addr - jump to location nnn
             chip8->pc = opcode & 0x0FFF;
             break;
-        case 0x2000: // 2nnn -> CALL addr
+        case 0x2000: // 2nnn -> CALL addr // THIS
             chip8->stack[chip8->sp] = chip8->pc;
             chip8->sp += 1;
+            //chip8->stack[chip8->sp] = chip8->pc;
             chip8->pc = opcode & 0x0FFF;
             break;
         case 0x3000: // 3xkk - SE Vx, byte (SE) - skip NEXT instruction if Vx == kk
@@ -82,15 +85,15 @@ void emulateCycle(CHIP8* chip8) {
                     chip8->pc += 2;
                     break;
                 case 0x0001: // 8xy1 - performs bitwise OR between values in Vx and Vy and stores result in Vx
-                    chip8->V[x] |= chip8->V[y];
+                    chip8->V[x] = (chip8->V[x] | chip8->V[y]);
                     chip8->pc += 2;
                     break;
                 case 0x0002: // 8xy2 - performs bitwise AND between values in Vx and Vy and stores result in Vx
-                    chip8->V[x] &= chip8->V[y];
+                    chip8->V[x] = (chip8->V[x] & chip8->V[y]);
                     chip8->pc += 2;
                     break;
                 case 0x0003: // 8xy3 - performs bitwise XOR between values in Vx and Vy and stores result in Vx
-                    chip8->V[x] ^= chip8->V[y];
+                    chip8->V[x] = (chip8->V[x] ^ chip8->V[y]);
                     chip8->pc += 2;
                     break;
                 case 0x0004: // 8xy4 - set Vx = Vx + Vy, set VF = 1 if carry, VF = 0 otherwise.
@@ -110,7 +113,8 @@ void emulateCycle(CHIP8* chip8) {
                     break;
                 case 0x0006: // 8xy6 - Set Vx = Vx SHR 1 (shift right 1)
                     chip8->V[0xF] = (chip8->V[x] & 0x1);
-                    chip8->V[x] >>= 1;
+                    //chip8->V[x] >>= 1;
+                    chip8->V[x] = (chip8->V[x] >> 1);
                     chip8->pc += 2;
                     break;
                 case 0x0007: // 8xy7 - Set Vx = Vy - Vx, set VF = NOT borrow.
@@ -121,8 +125,8 @@ void emulateCycle(CHIP8* chip8) {
                     chip8->pc += 2;
                     break; 
                 case 0x000E: // 8xyE - Set Vx = Vx SHL 1.
-                    chip8->V[0xF] = ((chip8->V[x] >> 7) & 0x1); // shifting to right 7 times puts most significant bit at the rightmost spot
-                    chip8->V[x] <<= 1;
+                    chip8->V[0xF] = (chip8->V[x] >> 7) & 0x1; // shifting to right 7 times puts most significant bit at the rightmost spot
+                    chip8->V[x] = (chip8->V[x] << 1);
                     chip8->pc += 2;
                     break;                     
                 default:
@@ -145,8 +149,7 @@ void emulateCycle(CHIP8* chip8) {
             break;
         case 0xC000: // Cxkk - Set Vx = random byte AND kk.
             //srand(time(NULL)); // Seed the random number generator
-            randomByte = (unsigned char) rand(); // rand() produces a random int, so casting it to a char gives a random char
-            chip8->V[x] = randomByte & (opcode & 0x00FF);
+            chip8->V[x] = (rand() % 256) & (opcode & 0x00FF);
             chip8->pc += 2;
             break;
         case 0xD000: // Dxyn - Display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision.
@@ -156,14 +159,19 @@ void emulateCycle(CHIP8* chip8) {
             chip8->V[0xF] = 0;
             unsigned char xPos = chip8->V[x] % SCREEN_WIDTH;
             unsigned char yPos = chip8->V[y] % SCREEN_HEIGHT;
+            unsigned short height = (opcode & 0x000F);
+            unsigned short spriteByte;
 
             // the first row of the sprite is located at memory[i], second row located at memory[i+1], etc. [each row is a byte]
-            for (int row = 0; row < (opcode & 0x000F); row++) { 
-                unsigned char spriteByte = chip8->memory[chip8->I + row]; // gets the start of the rowth byte in the sprite
+            for (int row = 0; row < height; row++) { 
+                spriteByte = chip8->memory[chip8->I + row]; // gets the start of the rowth byte in the sprite
                 for (int col = 0; col < 8; col++) { // go thru all the 8 bits in this byte of the sprite (shift spriteByte i bits to right then do & 1 to get the ith bit)
-                    unsigned char spritePixel = (spriteByte >> col) & 0x01;
+                    //unsigned char spritePixel = (spriteByte >> (7 - col)) & 0x01; // 1001 1010
+                    //unsigned short spritePixel = spriteByte & (0x80u >> col);
+                    //unsigned char spritePixel = (spriteByte >> col) & 0x01;
+                    //unsigned int *screenPixel = &chip8->screen[((yPos + row) % SCREEN_HEIGHT) * SCREEN_WIDTH + ((xPos + col) % SCREEN_WIDTH)];
                     unsigned int* screenPixel = &chip8->screen[(yPos + row) * SCREEN_WIDTH + (xPos + col)]; // get what's currently at the position we need to be at
-                    if (spritePixel) { // if the spritePixel is on
+                    if (spriteByte & (0x80 >> col)) { // if the spritePixel is on
                         if (*screenPixel)
                             chip8->V[0xF] = 1;
                         *screenPixel ^= 0xFFFFFFFF;
