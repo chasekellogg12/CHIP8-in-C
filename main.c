@@ -3,6 +3,7 @@
 #define WINDOW_WIDTH (SCREEN_WIDTH * WINDOW_SCALE)
 #define WINDOW_HEIGHT (SCREEN_HEIGHT * WINDOW_SCALE)
 #include <SDL2/SDL.h>
+#include <unistd.h>
 
 
 SDL_Window* window = NULL;
@@ -10,7 +11,7 @@ SDL_Renderer* renderer = NULL;
 SDL_Texture* texture = NULL;
 
 int initialize();
-void close();
+void closeDisplay();
 int handleInput(unsigned char* keyboard);
 
 int main() {
@@ -28,20 +29,25 @@ int main() {
     SDL_Event e;
 
     while (!quit) {
-        // handle input
-        quit = handleInput(chip8.keyboard);
 
         // emulate the cycle
         emulateCycle(&chip8);
 
+        // handle input
+        quit = handleInput(chip8.keyboard);
+
         // render the screen
-        SDL_UpdateTexture(texture, NULL, chip8.screen, SCREEN_WIDTH * sizeof(Uint32));
-        SDL_RenderClear(renderer);
-        SDL_RenderCopy(renderer, texture, NULL, NULL);
-        SDL_RenderPresent(renderer);
+        if (chip8.drawFlag) {
+            SDL_UpdateTexture(texture, NULL, chip8.screen, SCREEN_WIDTH * sizeof(Uint32));
+            SDL_RenderClear(renderer);
+            SDL_RenderCopy(renderer, texture, NULL, NULL);
+            SDL_RenderPresent(renderer);
+        }
+
+        usleep(1500);
     }
     
-    close();
+    closeDisplay();
     return 0;
 }
 
@@ -53,7 +59,7 @@ int initialize() {
     }
 
     // create the window
-    window = SDL_CreateWindow("CHIP-8 Emulator", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_SHOWN);
+    window = SDL_CreateWindow("CHIP-8 Emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_SHOWN);
     if (window == NULL) {
         printf("Window could not be created! SDL_Error: %s\n", SDL_GetError());
         return 0;
@@ -76,7 +82,7 @@ int initialize() {
     return 1;
 }
 
-void close() {
+void closeDisplay() {
     SDL_DestroyTexture(texture);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);

@@ -13,8 +13,9 @@ void emulateCycle(CHIP8* chip8) {
         - to execute:
             - see implementations in the switch cases below
     */
-
     unsigned short opcode = (chip8->memory[chip8->pc] << 8) | chip8->memory[chip8->pc+1]; // fetch and decode
+
+    chip8->drawFlag = 0;
 
     // x will always appear in the second position. This is an index.
     unsigned short x = (opcode & 0x0F00) >> 8; // 0x0F00 = 0000 1111 0000 0000 -> shift to the right 8 times to get just the index.
@@ -151,9 +152,10 @@ void emulateCycle(CHIP8* chip8) {
         case 0xD000: // Dxyn - Display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision.
             // given a sprite (the bytes for which are located at memory[I]), go thru the 8 bits of each of its bytes
             // if this bit is a 1, do screen pixel ^= 0xFFFFFFFFFF (which is just xoring it by 1)
+            chip8->drawFlag = 1;
             chip8->V[0xF] = 0;
             unsigned char xPos = chip8->V[x] % SCREEN_WIDTH;
-            unsigned char yPos = chip8->V[x] % SCREEN_HEIGHT;
+            unsigned char yPos = chip8->V[y] % SCREEN_HEIGHT;
 
             // the first row of the sprite is located at memory[i], second row located at memory[i+1], etc. [each row is a byte]
             for (int row = 0; row < (opcode & 0x000F); row++) { 
@@ -278,6 +280,7 @@ void initializeEmulator(CHIP8* chip8) {
     chip8->pc = 0x200; // has to start at address 0x200 (because the space above this is for the interpreter)
     chip8->sp = 0; // starts at the top of the stack
     chip8->I = 0; // index register starts at top of stack
+    chip8->drawFlag = 0;
 
     // clear the display: (go thru all the pixels and set them to 0)
     for (int i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++)
