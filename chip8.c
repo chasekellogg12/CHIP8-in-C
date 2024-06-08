@@ -246,12 +246,12 @@ void emulateCycle(CHIP8* chip8) {
         chip8->delayTimer -= 1;
 }
 
-void loadROM(CHIP8* chip8, const char* filename) {
+int loadROM(CHIP8* chip8, const char* filename) {
     // open the file, check for errors
     FILE* file = fopen(filename, "rb");
     if (file == NULL) {
         fprintf(stderr, "Error opening the file\n");
-        exit(1);
+        return 1;
     }
     
     struct stat buf;
@@ -264,8 +264,10 @@ void loadROM(CHIP8* chip8, const char* filename) {
     fclose(file);
     if (bytesRead != fileSize) {
         fprintf(stderr, "Error reading file\n");
-        exit(1);
+        return 1;
     }
+    
+    return 0;
 }
 
 void initializeEmulator(CHIP8* chip8) {

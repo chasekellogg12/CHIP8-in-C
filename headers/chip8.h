@@ -29,7 +29,7 @@ typedef struct {
     unsigned char drawFlag;
 } CHIP8;
 
-void loadROM(CHIP8* chip8, const char* filename);
+int loadROM(CHIP8* chip8, const char* filename);
 void initializeEmulator(CHIP8* chip8);
 void emulateCycle(CHIP8* chip8);
 

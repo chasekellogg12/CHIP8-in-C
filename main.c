@@ -1,16 +1,23 @@
 #include "headers/chip8.h"
 #include "headers/main.h"
 
-int main() {
+int main(int argc, char *argv[]) {
+    if (argc != 2) {
+        fprintf(stderr, "Usage: ./main [ROM PATH]\n");
+        exit(1);
+    }
+    
     // initialize the screen 
     if (!initialize()) {
-        fprintf(stderr, "Failed to initialize!\n");
+        fprintf(stderr, "Failed to initialize\n");
         exit(1);
     }   
 
     CHIP8 chip8;
     initializeEmulator(&chip8);
-    loadROM(&chip8, "roms/BREAKOUT.ch8");
+    int loadError = loadROM(&chip8, argv[1]);
+    if (loadError)
+        exit(1);
 
     int quit = 0;
     SDL_Event e;
