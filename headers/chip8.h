@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <SDL2/SDL.h>
+#include <unistd.h>
 
 #define MEMORY_SIZE 4096
 #define NUM_REGISTERS 16
