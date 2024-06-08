@@ -7,3 +7,7 @@
 *.sym
 
 .vscode
+
+# Executable files
+main
+test
