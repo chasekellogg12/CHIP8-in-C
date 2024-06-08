@@ -1,20 +1,24 @@
+# Compiler
 CC = clang
-CFLAGS = -Wall -Wextra -std=c11 -I/Library/Frameworks/SDL2.framework/Headers
+
+# Executable
+EXEC = main
+
+# Source files
+SRC = main.c chip8.c
+
+# Compiler and linker flags
 LDFLAGS = -F/Library/Frameworks -framework SDL2 -Wl,-rpath,/Library/Frameworks
 
-SRC = main.c chip8.c
-OBJ = $(SRC:.c=.o)
-EXEC = chip8
-
+# Default target
 all: $(EXEC)
 
-$(EXEC): $(OBJ)
-	$(CC) -o $@ $^ $(LDFLAGS)
+# Link object files to create the executable
+$(EXEC):
+	$(CC) -o $(EXEC) $(SRC) $(LDFLAGS)
 
-%.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
-
+# Clean target to remove generated files
 clean:
-	rm -f $(OBJ) $(EXEC)
+	rm -f $(EXEC)
 
-.PHONY: clean
+.PHONY: all clean
